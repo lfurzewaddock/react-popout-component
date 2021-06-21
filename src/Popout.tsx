@@ -218,15 +218,22 @@ export class Popout extends React.Component<PopoutProps, {}> {
 
     private runtimeWindow = async (name, options) => {
         if (this.isFin) {
+            console.log("options", options);
+
             const winOption = {
                 name,
                 defaultWidth: 300,
                 defaultHeight: 300,
                 url: this.props.url,
-                // frame: true,
+                backgroundColor: options.backgroundColor || "#fff",
+                frame: true,
                 saveWindowState: true,
                 autoShow: true,
                 alwaysOnTop: true,
+                accelerator: {
+                    devtools: true,
+                    zoom: true,
+                },
             };
 
             const app = await fin.Application.getCurrent();
