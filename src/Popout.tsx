@@ -24,8 +24,6 @@ export class Popout extends React.Component<PopoutProps, {}> {
     public child: Window | null;
 
     private setupOnCloseHandler(id: string, child: Window) {
-        console.log("setupOnCloseHandler called!!!! id", id);
-        console.log("setupOnCloseHandler called!!!! child", child);
         // For Edge, IE browsers, the document.head might not exist here yet. We will just simply attempt again when RAF is called
         // For Firefox, on the setTimeout, the child window might actually be set to null after the first attempt if there is a popup blocker
         if (this.setupAttempts >= 5) {
@@ -218,8 +216,6 @@ export class Popout extends React.Component<PopoutProps, {}> {
 
     private runtimeWindow = async (name, options) => {
         if (this.isFin) {
-            console.log("options", options);
-
             const winOption = {
                 name,
                 defaultWidth: 300,
@@ -239,7 +235,7 @@ export class Popout extends React.Component<PopoutProps, {}> {
             const app = await fin.Application.getCurrent();
             const childWins = await app.getChildWindows();
 
-            // wrap existing windows if any
+            // close existing window
             if (
                 childWins.filter((win) => {
                     if (
@@ -249,10 +245,12 @@ export class Popout extends React.Component<PopoutProps, {}> {
                         return true;
                 }).length
             ) {
-                return window.fin.Window.wrap({
+                const existingWin = await window.fin.Window.wrap({
                     uuid: window.fin.me.identity.uuid,
                     name,
                 });
+
+                await existingWin.close();
             }
 
             return window.fin.Window.create(winOption);
@@ -268,9 +266,6 @@ export class Popout extends React.Component<PopoutProps, {}> {
 
         const name = getWindowName(this.props.name!);
 
-        console.log(`isFin = ${this.isFin}`);
-        console.log("openChildWindow");
-
         this.child = validatePopupBlocker(this.runtimeWindow(name, options));
 
         if (!this.child) {
@@ -285,10 +280,8 @@ export class Popout extends React.Component<PopoutProps, {}> {
     };
 
     private closeChildWindowIfOpened = async () => {
-        console.log("closeChildWindowIfOpened called!!!!");
         if (isChildWindowOpened(this.child)) {
             let win = await this.child;
-            console.log("closeChildWindowIfOpened win", win);
 
             if (this.isFin) {
                 // win.close(true);

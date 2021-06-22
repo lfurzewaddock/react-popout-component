@@ -1,6 +1,6 @@
 {
     "name": "react-popout-component",
-    "version": "1.8.5",
+    "version": "1.9.5",
     "description": "",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
