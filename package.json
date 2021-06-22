@@ -1,5 +1,5 @@
 {
-    "name": "react-popout-component",
+    "name": "@ewmarkets/react-popout-component",
     "version": "1.9.5",
     "description": "",
     "main": "lib/index.js",
