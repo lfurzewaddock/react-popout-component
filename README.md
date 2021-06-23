@@ -1,42 +1,43 @@
 # React Popout Component
 
-[![Build Status](https://travis-ci.org/Microsoft/react-popout-component.svg?branch=v1.0.0)](https://travis-ci.org/Microsoft/react-popout-component) [![npm](https://img.shields.io/npm/v/react-popout-component.svg)](https://www.npmjs.com/package/react-popout-component)
+-   Status: this fork should be considered work in progress
+-   Objective: feature parity: OpenFin & web browser windows
 
 This is a React component designed for React 16 with complete Typescript support.
 
 ## Features
 
-1. This is developed along side with the React 16 fix to allow mounting across frames *even for Edge and IE* browsers
+1. This is developed along side with the React 16 fix to allow mounting across frames _even for Edge and IE_ browsers
 2. Typescript support for all the options (especially hard to remember window features)
 3. Reflects style-loader injected styles from the main window to the children window
 
 ## Installation
 
 ```sh
-npm install react-popout-component
+npm install @ewmarkets/react-popout-component
 ```
 
 or
 
 ```sh
-yarn add react-popout-component
+yarn add @ewmarkets/react-popout-component
 ```
 
 ## Usage
 
 ```tsx
-import * as React from 'react';
-import {Popout} from 'react-popout-component';
+import * as React from "react";
+import { Popout } from "@ewmarkets/react-popout-component";
 
 export default class App extends React.Component<any, any> {
     constructor(props: any) {
         super(props);
-        this.state = {showPopout: false};
+        this.state = { showPopout: false };
     }
 
     onClick = () => {
-        this.setState({showPopout: true});
-    }
+        this.setState({ showPopout: true });
+    };
 
     render() {
         return (
@@ -52,7 +53,6 @@ export default class App extends React.Component<any, any> {
         );
     }
 }
-
 ```
 
 ## API
@@ -91,26 +91,27 @@ export interface WindowFeaturesOptions {
 ## Injection Mode
 
 This component works well for both modes of style loading:
+
 1. Appending Style blocks (e.g. style-loader)
 2. Manual insertRule() into a CSSStyleSheet
 
 For the second case with insertRule(), since there is nothing that can observe the insert event, a callback must be registered when a
-rule is inserted. For an example usage with the Microsoft [Office Fabric](https://github.com/officedev/office-ui-fabric-react), 
+rule is inserted. For an example usage with the Microsoft [Office Fabric](https://github.com/officedev/office-ui-fabric-react),
 set it up as a global like so:
 
 ```js
-import {insertPopoutStylesheetRule} from 'react-popout-component';
+import { insertPopoutStylesheetRule } from "@ewmarkets/react-popout-component";
 
 window.FabricConfig = {
     mergeStyles: {
-        onInsertRule: insertPopoutStylesheetRule
-    }
-}
+        onInsertRule: insertPopoutStylesheetRule,
+    },
+};
 ```
 
 ## Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
