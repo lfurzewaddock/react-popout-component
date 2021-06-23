@@ -1,7 +1,7 @@
 {
     "name": "@ewmarkets/react-popout-component",
-    "version": "1.9.5",
-    "description": "",
+    "version": "1.9.6",
+    "description": "Popout windows for web browsers and OpenFin",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
     "scripts": {
@@ -31,6 +31,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/microsoft/react-popout-component"
+        "url": "https://github.com/lfurzewaddock/react-popout-component"
     }
 }
