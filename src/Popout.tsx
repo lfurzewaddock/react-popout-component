@@ -23,7 +23,34 @@ export class Popout extends React.Component<PopoutProps, {}> {
 
     public child: Window | null;
 
-    private setupOnCloseHandler(id: string, child: Window) {
+    private async setupOnCloseHandler(id: string, child: Window) {
+        const { onClose } = this.props;
+
+        if (this.isFin) {
+            child.addListener("reloaded", () => {
+                this.closeChildWindowIfOpened();
+            });
+
+            child.addListener("closed", async () => {
+                if (onClose) {
+                    try {
+                        await onClose();
+                    } catch (e) {
+                        console.error("child evt closed", e);
+                    }
+                }
+            });
+
+            const win = await fin.Window.getCurrent();
+            const webWin = win.getWebWindow();
+
+            webWin.addEventListener("beforeunload", () => {
+                this.setupCleanupCallbacks();
+            });
+
+            return;
+        }
+
         // For Edge, IE browsers, the document.head might not exist here yet. We will just simply attempt again when RAF is called
         // For Firefox, on the setTimeout, the child window might actually be set to null after the first attempt if there is a popup blocker
         if (this.setupAttempts >= 5) {
@@ -70,11 +97,15 @@ export class Popout extends React.Component<PopoutProps, {}> {
         }
     }
 
-    private setupCleanupCallbacks() {
+    private async setupCleanupCallbacks() {
         // Close the popout if main window is closed.
-        window.addEventListener("unload", (e) =>
-            this.closeChildWindowIfOpened()
-        );
+        if (this.isFin) {
+            this.closeChildWindowIfOpened();
+        } else {
+            window.addEventListener("unload", (e) =>
+                this.closeChildWindowIfOpened()
+            );
+        }
 
         globalContext.set("onChildClose", (id: string) => {
             if (popouts[id].props.onClose) {
@@ -195,20 +226,20 @@ export class Popout extends React.Component<PopoutProps, {}> {
     private async initializeChildWindow(id: string, child: Window) {
         popouts[id] = this;
 
-        let childWin = null;
+        let win = null;
         try {
-            childWin = await child;
+            win = await child;
         } catch (e) {
             console.error("child window", e);
         }
 
         if (!this.props.url) {
-            const container: HTMLDivElement = this.injectHtml(id, childWin);
-            this.setupStyleObserver(childWin);
-            this.setupOnCloseHandler(id, childWin);
+            const container: HTMLDivElement = this.injectHtml(id, win);
+            this.setupStyleObserver(win);
+            this.setupOnCloseHandler(id, win);
             return container;
         } else {
-            this.setupOnCloseHandler(id, childWin);
+            this.setupOnCloseHandler(id, win);
 
             return null;
         }
@@ -218,8 +249,8 @@ export class Popout extends React.Component<PopoutProps, {}> {
         if (this.isFin) {
             const winOption = {
                 name,
-                defaultWidth: 300,
-                defaultHeight: 300,
+                defaultWidth: 400,
+                defaultHeight: 500,
                 url: this.props.url,
                 backgroundColor: options.backgroundColor || "#fff",
                 frame: true,
@@ -231,27 +262,6 @@ export class Popout extends React.Component<PopoutProps, {}> {
                     zoom: true,
                 },
             };
-
-            const app = await fin.Application.getCurrent();
-            const childWins = await app.getChildWindows();
-
-            // close existing window
-            if (
-                childWins.filter((win) => {
-                    if (
-                        win.identity.uuid === window.fin.me.identity.uuid &&
-                        win.identity.name === name
-                    )
-                        return true;
-                }).length
-            ) {
-                const existingWin = await window.fin.Window.wrap({
-                    uuid: window.fin.me.identity.uuid,
-                    name,
-                });
-
-                await existingWin.close();
-            }
 
             return window.fin.Window.create(winOption);
         }
@@ -280,23 +290,29 @@ export class Popout extends React.Component<PopoutProps, {}> {
     };
 
     private closeChildWindowIfOpened = async () => {
-        if (isChildWindowOpened(this.child)) {
-            let win = await this.child;
-
+        let win = null;
+        try {
+            win = await this.child;
+        } catch (e) {
+            console.error("child window", e);
+        }
+        if (isChildWindowOpened(win)) {
             if (this.isFin) {
-                // win.close(true);
-                // this.child = null;
-                // if (this.props.onClose) {
-                //     this.props.onClose();
-                // }
+                try {
+                    await win.close(true);
+                } catch (e) {
+                    console.error("close opened child win", e);
+                    // TODO: fix error raised for popout close & reload
+                    // RuntimeError: Could not locate the requested window
+                }
             } else {
                 // Note: strange TS syntax: https://github.com/Microsoft/TypeScript/wiki/What's-new-in-TypeScript#non-null-assertion-operator
                 win!.close();
+            }
+            this.child = null;
 
-                this.child = null;
-                if (this.props.onClose) {
-                    this.props.onClose();
-                }
+            if (this.props.onClose) {
+                this.props.onClose();
             }
         }
     };
@@ -354,21 +370,26 @@ function validateUrl(url: string) {
     }
 }
 
-function validatePopupBlocker(child: Window) {
-    // if (window.isFin) {
-    //     // TODO: OpenFin logic required?
-    //     console.log("validatePopupBlocker child", child)
-    //     return child;
-    // }
+async function validatePopupBlocker(child: Window) {
+    let win = null;
+    try {
+        win = await child;
+    } catch (e) {
+        console.error("child window", e);
+    }
+    if (window.fin) {
+        // TODO: OpenFin logic required?
+        return child;
+    }
 
-    // if (
-    //     !child ||
-    //     child.closed ||
-    //     typeof child == 'undefined' ||
-    //     typeof child.closed == 'undefined'
-    // ) {
-    //     return null;
-    // }
+    if (
+        !win ||
+        win.closed ||
+        typeof win == "undefined" ||
+        typeof win.closed == "undefined"
+    ) {
+        return null;
+    }
     return child;
 }
 

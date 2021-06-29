@@ -1,6 +1,6 @@
 {
     "name": "@ewmarkets/react-popout-component",
-    "version": "1.9.7",
+    "version": "1.10.0",
     "description": "Popout windows for web browsers and OpenFin",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
