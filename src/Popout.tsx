@@ -286,6 +286,7 @@ export class Popout extends React.Component<PopoutProps, {}> {
         } else {
             this.id = `__${name}_container__`;
             this.container = this.initializeChildWindow(this.id, this.child!);
+            this.child.document.title = getWindowTitle(this.props.title);
         }
     };
 
@@ -399,6 +400,10 @@ function isChildWindowOpened(child: Window | null) {
 
 function getWindowName(name: string) {
     return name || Math.random().toString(12).slice(2);
+}
+
+function getWindowTitle(title?: string) {
+    return title || '';
 }
 
 function forEachStyleElement(
