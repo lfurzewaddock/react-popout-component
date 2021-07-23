@@ -24,23 +24,7 @@ export class Popout extends React.Component<PopoutProps, {}> {
     public child: Window | null;
 
     private async setupOnCloseHandler(id: string, child: Window) {
-        const { onClose } = this.props;
-
         if (this.isFin) {
-            child.addListener("reloaded", () => {
-                this.closeChildWindowIfOpened();
-            });
-
-            child.addListener("closed", async () => {
-                if (onClose) {
-                    try {
-                        await onClose();
-                    } catch (e) {
-                        console.error("child evt closed", e);
-                    }
-                }
-            });
-
             const win = await fin.Window.getCurrent();
             const webWin = win.getWebWindow();
 
@@ -245,13 +229,14 @@ export class Popout extends React.Component<PopoutProps, {}> {
         }
     }
 
-    private runtimeWindow = async (name, options) => {
+    private runtimeWindow = async (name, title, options) => {
         if (this.isFin) {
+            const { onClose, url } = this.props;
             const winOption = {
                 name,
                 defaultWidth: 400,
                 defaultHeight: 500,
-                url: this.props.url,
+                url,
                 backgroundColor: options.backgroundColor || "#fff",
                 frame: true,
                 saveWindowState: true,
@@ -263,20 +248,52 @@ export class Popout extends React.Component<PopoutProps, {}> {
                 },
             };
 
-            return window.fin.Window.create(winOption);
+            const win = window.fin.Window.create(winOption);
+
+            let appWin = null;
+            try {
+                appWin = await win;
+            } catch (e) {
+                console.error("runtime window", e);
+            }
+
+            appWin.addListener("reloaded", () => {
+                this.closeChildWindowIfOpened();
+            });
+
+            appWin.addListener("closed", async () => {
+                if (onClose) {
+                    try {
+                        await onClose();
+                    } catch (e) {
+                        console.error("child evt closed", e);
+                    }
+                }
+            });
+
+            const webWin = appWin.getWebWindow();
+            webWin.document.title = title;
+
+            return webWin;
         }
 
-        return Promise.resolve(
-            window.open(this.props.url || "about:blank", name, options)
+        const win = window.open(this.props.url || "about:blank", name, options);
+        win.addEventListener(
+            "DOMContentLoaded",
+            () => (win.document.title = title)
         );
+        return win;
     };
 
     private openChildWindow = () => {
         const options = generateWindowFeaturesString(this.props.options || {});
 
         const name = getWindowName(this.props.name!);
+        const title = getWindowTitle(this.props.title!);
 
-        this.child = validatePopupBlocker(this.runtimeWindow(name, options));
+        this.child = validatePopupBlocker(
+            this.runtimeWindow(name, title, options)
+        );
 
         if (!this.child) {
             if (this.props.onBlocked) {
@@ -286,7 +303,6 @@ export class Popout extends React.Component<PopoutProps, {}> {
         } else {
             this.id = `__${name}_container__`;
             this.container = this.initializeChildWindow(this.id, this.child!);
-            this.child.document.title = getWindowTitle(this.props.title);
         }
     };
 
@@ -303,11 +319,8 @@ export class Popout extends React.Component<PopoutProps, {}> {
                     await win.close(true);
                 } catch (e) {
                     console.error("close opened child win", e);
-                    // TODO: fix error raised for popout close & reload
-                    // RuntimeError: Could not locate the requested window
                 }
             } else {
-                // Note: strange TS syntax: https://github.com/Microsoft/TypeScript/wiki/What's-new-in-TypeScript#non-null-assertion-operator
                 win!.close();
             }
             this.child = null;
@@ -403,7 +416,7 @@ function getWindowName(name: string) {
 }
 
 function getWindowTitle(title?: string) {
-    return title || '';
+    return title || "";
 }
 
 function forEachStyleElement(
