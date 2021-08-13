@@ -234,14 +234,15 @@ export class Popout extends React.Component<PopoutProps, {}> {
             const { onClose, url } = this.props;
             const winOption = {
                 name,
-                defaultWidth: 400,
-                defaultHeight: 500,
+                defaultWidth: options.defaultWidth || 400,
+                defaultHeight: options.defaultHeight || 500,
                 url,
                 backgroundColor: options.backgroundColor || "#fff",
                 frame: true,
                 saveWindowState: true,
                 autoShow: true,
-                alwaysOnTop: true,
+                alwaysOnTop: options.alwaysOnTop || true,
+                defaultCentered: options.defaultCentered || false,
                 accelerator: {
                     devtools: true,
                     zoom: true,
