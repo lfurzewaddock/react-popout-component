@@ -261,13 +261,11 @@ export class Popout extends React.Component<PopoutProps, {}> {
                 this.closeChildWindowIfOpened();
             });
 
-            appWin.addListener("closed", async () => {
+            appWin.addListener("closing", () => {
+              // called (First) on multi-user app popout window close user interaction
+              // note: potential bug: this can occur repeatedly
                 if (onClose) {
-                    try {
-                        await onClose();
-                    } catch (e) {
-                        console.error("child evt closed", e);
-                    }
+                  onClose();
                 }
             });
 
@@ -316,6 +314,9 @@ export class Popout extends React.Component<PopoutProps, {}> {
         if (isChildWindowOpened(win)) {
             if (this.isFin) {
                 try {
+                    // called (First) on multi-user app main window logout
+                    // called (First) on multi-user app main window close user interaction
+                    // called (Second) on multi-user app popout window close user interaction
                     await win.close(true);
                 } catch (e) {
                     console.error("close opened child win", e);
