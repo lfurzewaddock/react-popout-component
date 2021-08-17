@@ -232,21 +232,22 @@ export class Popout extends React.Component<PopoutProps, {}> {
     private runtimeWindow = async (name, title, options) => {
         if (this.isFin) {
             const { onClose, url } = this.props;
+
             const winOption = {
-                name,
-                defaultWidth: options.defaultWidth || 400,
-                defaultHeight: options.defaultHeight || 500,
-                url,
-                backgroundColor: options.backgroundColor || "#fff",
-                frame: true,
-                saveWindowState: true,
-                autoShow: true,
-                alwaysOnTop: options.alwaysOnTop || true,
-                defaultCentered: options.defaultCentered || false,
-                accelerator: {
-                    devtools: true,
-                    zoom: true,
+                accelerator: options.accelerator || {
+                  devtools: true,
+                  zoom: true,
                 },
+                alwaysOnTop: options.alwaysOnTop || true,
+                autoShow: options.autoShow || true,
+                backgroundColor: options.backgroundColor || "#fff",
+                defaultCentered: options.defaultCentered || false,
+                defaultHeight: options.defaultHeight || 500,
+                defaultWidth: options.defaultWidth || 400,
+                frame: options.frame || true,
+                name,
+                saveWindowState: options.saveWindowState || true,
+                url,
             };
 
             const win = window.fin.Window.create(winOption);
@@ -285,13 +286,35 @@ export class Popout extends React.Component<PopoutProps, {}> {
     };
 
     private openChildWindow = () => {
-        const options = generateWindowFeaturesString(this.props.options || {});
+        const { 
+          accelerator,
+          alwaysOnTop, 
+          autoShow,
+          backgroundColor,
+          defaultCentered,
+          defaultWidth,
+          defaultHeight,
+          frame,
+          saveWindowState,
+          ...browserOptions,
+        } = this.props.options || {}
+        const options = generateWindowFeaturesString(browserOptions);
 
         const name = getWindowName(this.props.name!);
         const title = getWindowTitle(this.props.title!);
 
         this.child = validatePopupBlocker(
-            this.runtimeWindow(name, title, options)
+            this.runtimeWindow(name, title, {
+              accelerator,
+              alwaysOnTop,
+              autoShow,
+              backgroundColor,
+              defaultCentered,
+              defaultWidth,
+              defaultHeight,
+              frame,
+              saveWindowState,
+            })
         );
 
         if (!this.child) {
